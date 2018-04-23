@@ -4,6 +4,17 @@ Classifying 10 different categories of Urban Sounds using Deep Learning.
 The audio files can be downloaded from the following link: 
 https://drive.google.com/drive/folders/0By0bAi7hOBAFUHVXd1JCN3MwTEU
 
+
+## IMPORTANT: The folders should be arranged in the following manner: 
+Dir of train label: sounds/labels/train.csv
+
+Dir of test label: sounds/labels/test.csv
+
+Dir of train sounds:sounds/train/train_sound/ (audio files in .wav format)
+
+Dir of train sounds:sounds/test/test_sound/ (audio files in .wav format)
+
+
 ### The train folder are labelled
 ### The test folder aren't labelled
 
