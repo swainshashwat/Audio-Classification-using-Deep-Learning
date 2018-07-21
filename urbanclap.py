@@ -1,10 +1,8 @@
- #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Apr 12 22:00:37 2018
 
-@author: astaroth
-"""
+# coding: utf-8
+
+# In[61]:
+
 
 # importing necessary libraries and dependencies
 import os
@@ -15,10 +13,14 @@ import librosa
 from sklearn.preprocessing import LabelEncoder
 from keras.utils.np_utils import to_categorical
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, Flatten
-from keras.layers import Convolution2D, MaxPooling2D
+from keras.layers import Dense, Dropout, Activation
 from keras.optimizers import Adam
+from sklearn.cross_validation import train_test_split
 from sklearn import metrics
+
+
+# In[2]:
+
 
 train_data_dir = 'sounds/train/train_sound/'
 test_data_dir = 'sounds/test/test_sound/'
@@ -26,6 +28,10 @@ test_data_dir = 'sounds/test/test_sound/'
 # reading the labels
 train = pd.read_csv('sounds/labels/train.csv')
 test  = pd.read_csv('sounds/labels/test.csv')
+
+
+# In[3]:
+
 
 # function to load files and extract features
 def parser(row, data_dir):
@@ -54,66 +60,158 @@ def parser(row, data_dir):
     
     return [data_id, feature]
 
-# storing the audio files in DataFrame 'temp' and 'temp_test'
+
+# ### Reading train.csv and storing into temp
+
+# In[4]:
+
 
 # parsing train
 temp = train.apply(parser,axis=1,data_dir=train_data_dir)
 temp.columns = ['ID','feature']
 
-# adding Class to 'temp' and 'temp_test'
+
+# In[5]:
+
+
+# adding Class to 'temp'
 temp['Class'] = train['Class']
+
+
+# In[6]:
+
+
+type(temp)
+
+
+# ###  Reading test.csv and storing into temp_test
+
+# In[7]:
+
 
 # parsing test
 temp_test = test.apply(parser, axis=1,data_dir=test_data_dir)
 temp_test.columns = ['ID', 'feature']
 
-print("\ntrain data")
+
+# In[16]:
+
+
+temp_test = pd.DataFrame(temp_test)
+type(temp_test)
+
+
+# In[19]:
+
+
+temp_test.columns = ['mix']
+
+
+# In[23]:
+
+
+temp_test.keys()
+
+
+# In[24]:
+
+
+temp_test[['ID','feature']] = temp_test['mix'].apply(pd.Series)
+
+
+# In[28]:
+
+
+temp_test.drop('mix',axis=1,inplace=True)
+
+
+# In[32]:
+
+
+print("\n---------------------train data---------------------")
+print(type(temp))
 print(temp.head())
 
-print("\ntest data")
+print("\n---------------------test data---------------------")
+print(type(temp_test))
 print(temp_test.head())
 
+
+print('---------------------Checking for NONE values---------------------')
 # checking for NONE values
-print(temp.ID[temp.label.isnull()])
-print(temp_test.ID[temp.label.isnull()])
+print(temp.ID[temp.Class.isnull()])
 
 # removing NONE values from temp
-temp = temp[temp.label.notnull()]
+temp = temp[temp.Class.notnull()]
 temp_test = temp_test[temp_test.notnull()]
 #print(temp.ID[temp.label.isnull()])
 
+
+# In[37]:
+
+
+temp.Class.unique()
+
+
+# In[38]:
+
+
+temp.Class.nunique()
+
+
+# In[35]:
+
+
 # Label Encoding the audio data
-
 lb = LabelEncoder()
-
 
 # converting pd.series into np.array for faster processing
 X = np.array(temp.feature.tolist())
-y = np.array(temp.label.tolist())
+y = np.array(temp.Class.tolist())
 
 
 y = to_categorical(lb.fit_transform(y))
 
 
-# building a deep learning model
+# In[62]:
+
+
+x_train,x_test,y_train,y_test = train_test_split(X,y, test_size=0.3)
+
+
+# ## Building a deep learning model
+
+# In[73]:
+
+
 num_labels = y.shape[1]
 filter_size = 2
 
-model = Sequential()
+def categorical_classifier():
+    model = Sequential()
 
-# input and first hidden layer
-model.add(Dense(input_dim=40, units=256, activation='relu'))
-model.add(Dropout(0.5))
+    # input and first hidden layer
+    model.add(Dense(input_shape=(40,), units=256, activation='relu', kernel_initializer='uniform'))
+    model.add(Dropout(0.5))
 
-# second hidden layer
-model.add(Dense(units=256,activation='relu'))
-model.add(Dropout(0.5))
+    # second hidden layer
+    model.add(Dense(units=256,activation='relu',kernel_initializer='uniform'))
+    model.add(Dropout(0.5))
 
-# output layer
-model.add(Dense(output_dim=num_labels, activation='softmax'))
+    # output layer
+    model.add(Dense(units=num_labels, activation='softmax'))
 
-# compiling our model
-model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer='adam')
+    # compiling our model
+    model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer='adam')
+
+    # training the data
+    #model.fit(X,y, batch_size=32, epochs=500, validation_split=0.3)
+    return model
+
+
+# In[77]:
+
 
 # training the data
-model.fit(X,y, batch_size=32, epochs=5, validation_data=(val_x, val_y))
+model.fit(x_train,y_train, batch_size=32, epochs=650, validation_data=(x_test, y_test))
+
