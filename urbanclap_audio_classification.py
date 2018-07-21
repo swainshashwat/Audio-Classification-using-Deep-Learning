@@ -139,7 +139,7 @@ print(temp_test.head())
 
 print('---------------------Checking for NONE values---------------------')
 # checking for NONE values
-print(temp.ID[temp.Class.isnull()])
+print(temp[temp.Class.isnull()])
 
 # removing NONE values from temp
 temp = temp[temp.Class.notnull()]
